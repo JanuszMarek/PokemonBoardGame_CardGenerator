@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PokemonBoardGame_CardGenerator.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -62,7 +63,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class DamageClass
 	{
 		[JsonProperty("name")]
-		public string Name { get; set; }
+		public DamageClassEnum Name { get; set; }
 
 		[JsonProperty("url")]
 		public string Url { get; set; }

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using PokemonBoardGame_CardGenerator.Enums;
 
 namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 {
@@ -62,7 +63,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class MoveLearnMethod
 	{
 		[JsonProperty("name")]
-		public string Name { get; set; }
+		public LearnMethodEnum Name { get; set; }
 
 		[JsonProperty("url")]
 		public string Url { get; set; }

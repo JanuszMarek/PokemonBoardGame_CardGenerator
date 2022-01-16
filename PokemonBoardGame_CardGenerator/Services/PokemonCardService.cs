@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using PokemonBoardGame_CardGenerator.Enums;
 using PokemonBoardGame_CardGenerator.Extensions;
 using PokemonBoardGame_CardGenerator.Models;
 using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
@@ -51,7 +52,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 				Moves = moves.Select(x =>
 				{
 					var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
-					var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == "firered-leafgreen");
+					var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
 
 					return new PokemonCardMoveModel()
 					{
@@ -64,7 +65,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 						Type = x.Type.Name,
 						DamageClass = x.DamageClass.Name
 					};
-				}).Where(x => (x.LearnMethod == "level-up" || x.LearnMethod == "egg") && (x.DamageClass == "physical" || x.DamageClass == "special" || x.DamageClass == "status"))
+				}).Where(x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) && 
+					(x.DamageClass == DamageClassEnum.Physical || x.DamageClass == DamageClassEnum.Special || x.DamageClass == DamageClassEnum.Status))
 				.OrderBy(x => x.LevelLearnedAt).ToList(),
 			};
 
@@ -74,8 +76,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 
 			async Task<List<PokemonMove>> GetPokemonMoves(Pokemon pokemon)
 			{
-				var movesToGet = pokemon.Moves.Where(x => x.VersionGroupDetails.Any(v => v.VersionGroup.Name == "firered-leafgreen" && (v.MoveLearnMethod.Name == "level-up" ||
-					v.MoveLearnMethod.Name == "machine" || v.MoveLearnMethod.Name == "egg")));
+				var movesToGet = pokemon.Moves.Where(x => x.VersionGroupDetails.Any(v => v.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName() && (v.MoveLearnMethod.Name == LearnMethodEnum.LevelUp ||
+					v.MoveLearnMethod.Name == LearnMethodEnum.Machine || v.MoveLearnMethod.Name == LearnMethodEnum.Egg)));
 				var moveNames = movesToGet.Select(x => x.Move2.Name).Distinct();
 				var moves = new List<PokemonMove>();
 

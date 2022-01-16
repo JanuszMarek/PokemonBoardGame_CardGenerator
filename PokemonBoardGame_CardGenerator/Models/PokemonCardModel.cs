@@ -1,4 +1,5 @@
-﻿using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
+﻿using PokemonBoardGame_CardGenerator.Enums;
+using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
 
 namespace PokemonBoardGame_CardGenerator.Models
 {
@@ -20,12 +21,12 @@ namespace PokemonBoardGame_CardGenerator.Models
 	{
 		public string Name { get; set; }
 		public int? LevelLearnedAt { get; set; }
-		public string LearnMethod { get; set; }
+		public LearnMethodEnum? LearnMethod { get; set; }
 		public int? Power { get; set; }
 		public int? PP { get; set; }
 		public int? Accuracy { get; set; }
 		public string Type { get; set; }
-		public string DamageClass { get; set; }
+		public DamageClassEnum DamageClass { get; set; }
 	}
 
 	public class PokemonCardStatModel
