@@ -27,6 +27,10 @@ namespace PokemonBoardGame_CardGenerator.Services
 				var pokemonCard = await GetPokemonCardModelAsync(i);
 				pokemonCards.Add(pokemonCard);
 			}
+
+			var dir = "Output/";
+			SaveFileHelper.CreateFolderWhenNotExist(pokemonSettings.OutputPath + dir);
+			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "PokemonCardModels", pokemonCards);
 		}
 
 

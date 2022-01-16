@@ -25,7 +25,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 		public async Task<string> GetPokemonImageAsync(int pokeNo)
 		{
 			var imagePath = pokemonSettings.OutputPath + "Images/";
-			CreateFolderWhenNotExist(imagePath);
+			SaveFileHelper.CreateFolderWhenNotExist(imagePath);
 
 			var pokemonFileName = pokeNo + imageHttpService.GetPokemonImageExtension();
 			var pokePath = imagePath + pokemonFileName;
@@ -33,7 +33,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 			if (!File.Exists(pokePath))
 			{
 				var bytes = await imageHttpService.GetPokemonImageAsync(pokeNo.ToString());
-				await SavePokemonImagesAsync(pokePath,
+				await SaveFileHelper.SavePokemonImagesAsync(pokePath,
 					new PokemonImage()
 					{
 						FileName = pokemonFileName,
@@ -47,7 +47,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 		public async Task<Pokemon> GetPokemonDataAsync(int pokeNo)
 		{
 			var dirPath = pokemonSettings.OutputPath + "Data/Pokemons/";
-			CreateFolderWhenNotExist(dirPath);
+			SaveFileHelper.CreateFolderWhenNotExist(dirPath);
 
 			var pokemonFileName = pokeNo.ToString() + ".json";
 			var pokePath = dirPath + pokemonFileName;
@@ -56,7 +56,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 			if (!File.Exists(pokePath))
 			{
 				pokemon = await pokeApiHttpService.GetPokemonAsync(pokeNo);
-				await SavePokemonDataJsonAsync(dirPath, pokeNo, pokemon);
+				await SaveFileHelper.SavePokemonDataJsonAsync(dirPath, pokeNo, pokemon);
 			}
 			else
 			{
@@ -70,7 +70,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 		public async Task<PokemonMove> GetPokemonMoveAsync(string move)
 		{
 			var dirPath = pokemonSettings.OutputPath + "Data/PokemonMoves/";
-			CreateFolderWhenNotExist(dirPath);
+			SaveFileHelper.CreateFolderWhenNotExist(dirPath);
 
 			var pokemonFileName = move + ".json";
 			var pokePath = dirPath + pokemonFileName;
@@ -79,7 +79,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 			if (!File.Exists(pokePath))
 			{
 				data = await pokeApiHttpService.GetPokemonMoveAsync(move);
-				await SavePokemonDataJsonAsync(dirPath, move, data);
+				await SaveFileHelper.SavePokemonDataJsonAsync(dirPath, move, data);
 			}
 			else
 			{
@@ -93,7 +93,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 		public async Task<PokemonSpecies> GetPokemonSpeciesDataAsync(int pokeNo)
 		{
 			var dirPath = pokemonSettings.OutputPath + "Data/PokemonSpecies/";
-			CreateFolderWhenNotExist(dirPath);
+			SaveFileHelper.CreateFolderWhenNotExist(dirPath);
 
 			var pokemonFileName = pokeNo.ToString() + ".json";
 			var pokePath = dirPath + pokemonFileName;
@@ -102,7 +102,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 			if (!File.Exists(pokePath))
 			{
 				pokemon = await pokeApiHttpService.GetPokemonSpeciesAsync(pokeNo);
-				await SavePokemonDataJsonAsync(dirPath, pokeNo, pokemon);
+				await SaveFileHelper.SavePokemonDataJsonAsync(dirPath, pokeNo, pokemon);
 			}
 			else
 			{
@@ -111,34 +111,6 @@ namespace PokemonBoardGame_CardGenerator.Services
 			}
 
 			return pokemon;
-		}
-
-		private async Task SavePokemonImagesAsync(string path, PokemonImage pokemonImage)
-		{
-			Console.WriteLine($"Save image for Poke: {pokemonImage.FileName}");
-			await File.WriteAllBytesAsync(path, pokemonImage.Image);
-		}
-
-		private async Task SavePokemonDataJsonAsync<T>(string path, int pokeNo, T model)
-		{
-			Console.WriteLine($"Save {typeof(T).Name} for Poke: {pokeNo}");
-			var json = JsonConvert.SerializeObject(model, Formatting.Indented);
-			await File.WriteAllTextAsync(path + pokeNo + ".json", json, System.Text.Encoding.UTF8);
-		}
-
-		private async Task SavePokemonDataJsonAsync<T>(string path, string name, T model)
-		{
-			Console.WriteLine($"Save {typeof(T).Name} for: {name}");
-			var json = JsonConvert.SerializeObject(model, Formatting.Indented);
-			await File.WriteAllTextAsync(path + name + ".json", json, System.Text.Encoding.UTF8);
-		}
-
-		private void CreateFolderWhenNotExist(string path)
-		{
-			if (!Directory.Exists(path))
-			{
-				Directory.CreateDirectory(path);
-			}
 		}
 	}
 }
