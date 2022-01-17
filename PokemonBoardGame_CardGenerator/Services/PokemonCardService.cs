@@ -42,6 +42,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 			var pokemonSpecies = await pokemonDataService.GetPokemonSpeciesDataAsync(pokeNo);
 
 			List<PokemonMove> moves = await GetPokemonMoves(pokemon);
+			Func<PokemonCardMoveModel, bool> moveLimitation = x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) &&
+					(x.DamageClass == DamageClassEnum.Physical || x.DamageClass == DamageClassEnum.Special || x.DamageClass == DamageClassEnum.Status);
 
 			var pokemonCardModel = new PokemonCardModel()
 			{
@@ -49,25 +51,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 				Name = pokemon.Name.FirstCharToUpper(),
 				ImageUrl = pokemonImageUrl,
 				CaptureRate = pokemonSpecies.CaptureRate,
-				Moves = moves.Select(x =>
-				{
-					var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
-					var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
-
-					return new PokemonCardMoveModel()
-					{
-						Name = x.Name,
-						Accuracy = x.Accuracy,
-						LearnMethod = version?.MoveLearnMethod.Name,
-						LevelLearnedAt = version?.LevelLearnedAt,
-						Power = x.Power,
-						PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
-						Type = x.Type.Name,
-						DamageClass = x.DamageClass.Name
-					};
-				}).Where(x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) &&
-					(x.DamageClass == DamageClassEnum.Physical || x.DamageClass == DamageClassEnum.Special || x.DamageClass == DamageClassEnum.Status))
-				.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList(),
+				Moves = moves.Select(x => MapApiMoveToLocalType(x, pokemon)).Where(moveLimitation)
+					.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList(),
 				Stats = pokemon.Stats.Select(x => new PokemonCardStatModel()
 				{
 					Name = x.Stat2.Name,
@@ -116,6 +101,24 @@ namespace PokemonBoardGame_CardGenerator.Services
 				{
 					pokemonCardModel.Stats.Remove(stat);
 				}
+			}
+
+			static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x, Pokemon pokemon)
+			{
+				var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
+				var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
+
+				return new PokemonCardMoveModel()
+				{
+					Name = x.Name,
+					Accuracy = x.Accuracy,
+					LearnMethod = version?.MoveLearnMethod.Name,
+					LevelLearnedAt = version?.LevelLearnedAt,
+					Power = x.Power,
+					PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
+					Type = x.Type.Name,
+					DamageClass = x.DamageClass.Name
+				};
 			}
 		}
 	}
