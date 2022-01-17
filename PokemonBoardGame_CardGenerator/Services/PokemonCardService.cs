@@ -65,12 +65,18 @@ namespace PokemonBoardGame_CardGenerator.Services
 						Type = x.Type.Name,
 						DamageClass = x.DamageClass.Name
 					};
-				}).Where(x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) && 
+				}).Where(x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) &&
 					(x.DamageClass == DamageClassEnum.Physical || x.DamageClass == DamageClassEnum.Special || x.DamageClass == DamageClassEnum.Status))
-				.OrderBy(x => x.LevelLearnedAt).ToList(),
+				.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList(),
+				Stats = pokemon.Stats.Select(x => new PokemonCardStatModel()
+				{
+					Name = x.Stat2.Name,
+					Value = x.BaseStat
+				}).ToList(),
+
 			};
 
-			//Learn Method and DamageClass as enums to sort by level up and physical in first way and get 4
+			MergeSpecialStatsWithNormal(pokemonCardModel);
 
 			return pokemonCardModel;
 
@@ -88,6 +94,28 @@ namespace PokemonBoardGame_CardGenerator.Services
 				}
 
 				return moves;
+			}
+
+			static void MergeSpecialStatsWithNormal(PokemonCardModel pokemonCardModel)
+			{
+				var statsToRemove = new List<PokemonCardStatModel>();
+				foreach (var stat in pokemonCardModel.Stats)
+				{
+					var specialString = "special-";
+					var statIsSpecial = stat.Name.IndexOf(specialString);
+					if (statIsSpecial != -1)
+					{
+						var normalStatName = stat.Name.Substring(specialString.Length, stat.Name.Length - specialString.Length);
+						var normalStat = pokemonCardModel.Stats.FirstOrDefault(x => x.Name == normalStatName);
+
+						normalStat.Value = (normalStat.Value + stat.Value) / 2;
+						statsToRemove.Add(stat);
+					}
+				}
+				foreach (var stat in statsToRemove)
+				{
+					pokemonCardModel.Stats.Remove(stat);
+				}
 			}
 		}
 	}
