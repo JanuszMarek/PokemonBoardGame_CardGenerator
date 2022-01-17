@@ -26,5 +26,10 @@ namespace PokemonBoardGame_CardGenerator.HttpClients.Implementations
 		{
 			return await GetAsync<PokemonMove>(ApiVersion + "move/" + move);
 		}
+
+		public async Task<PokemonEvolutionChain> GetPokemonEvolutionChainAsync(int chainNo)
+		{
+			return await GetAsync<PokemonEvolutionChain>(ApiVersion + "evolution-chain/" + chainNo);
+		}
 	}
 }

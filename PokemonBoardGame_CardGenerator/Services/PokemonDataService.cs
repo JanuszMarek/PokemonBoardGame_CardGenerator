@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using PokemonBoardGame_CardGenerator.Extensions;
 using PokemonBoardGame_CardGenerator.HttpClients;
 using PokemonBoardGame_CardGenerator.HttpClients.Implementations;
 using PokemonBoardGame_CardGenerator.Models;
@@ -108,6 +109,31 @@ namespace PokemonBoardGame_CardGenerator.Services
 			{
 				var json = await File.ReadAllTextAsync(pokePath);
 				pokemon = JsonConvert.DeserializeObject<PokemonSpecies>(json);
+			}
+
+			return pokemon;
+		}
+
+		public async Task<PokemonEvolutionChain> GetPokemonEvolutionChainDataAsync(string evolutionUrl)
+		{
+			var dirPath = pokemonSettings.OutputPath + "Data/PokemonEvolution/";
+			SaveFileHelper.CreateFolderWhenNotExist(dirPath);
+
+			var evolutionNo = int.Parse(evolutionUrl.GetSubstringAfter("evolution-chain/").Replace("/",""));
+
+			var pokemonFileName = evolutionNo.ToString() + ".json";
+			var pokePath = dirPath + pokemonFileName;
+			PokemonEvolutionChain pokemon;
+
+			if (!File.Exists(pokePath))
+			{
+				pokemon = await pokeApiHttpService.GetPokemonEvolutionChainAsync(evolutionNo);
+				await SaveFileHelper.SavePokemonDataJsonAsync(dirPath, evolutionNo, pokemon);
+			}
+			else
+			{
+				var json = await File.ReadAllTextAsync(pokePath);
+				pokemon = JsonConvert.DeserializeObject<PokemonEvolutionChain>(json);
 			}
 
 			return pokemon;
