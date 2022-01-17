@@ -117,7 +117,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 					Power = x.Power,
 					PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
 					Type = x.Type.Name,
-					DamageClass = x.DamageClass.Name
+					DamageClass = x.DamageClass.Name,
+					Description = x.EffectEntries.FirstOrDefault()?.ShortEffect.Replace("$effect_chance", x.EffectChance)
 				};
 			}
 		}

@@ -228,7 +228,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public DamageClass DamageClass { get; set; }
 
 		[JsonProperty("effect_chance")]
-		public object EffectChance { get; set; }
+		public string EffectChance { get; set; }
 
 		[JsonProperty("effect_changes")]
 		public List<object> EffectChanges { get; set; }

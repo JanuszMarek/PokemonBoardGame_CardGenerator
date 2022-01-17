@@ -1,4 +1,5 @@
-﻿using PokemonBoardGame_CardGenerator.Enums;
+﻿using Newtonsoft.Json;
+using PokemonBoardGame_CardGenerator.Enums;
 using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
 
 namespace PokemonBoardGame_CardGenerator.Models
@@ -20,13 +21,17 @@ namespace PokemonBoardGame_CardGenerator.Models
 	public class PokemonCardMoveModel
 	{
 		public string? Name { get; set; }
+		[JsonIgnore]
 		public int? LevelLearnedAt { get; set; }
+		[JsonIgnore]
 		public LearnMethodEnum? LearnMethod { get; set; }
 		public int? Power { get; set; }
 		public int? PP { get; set; }
 		public int? Accuracy { get; set; }
 		public PokemonTypeEnum Type { get; set; }
+		[JsonIgnore]
 		public DamageClassEnum DamageClass { get; set; }
+		public string? Description { get; set; }
 	}
 
 	public class PokemonCardStatModel
