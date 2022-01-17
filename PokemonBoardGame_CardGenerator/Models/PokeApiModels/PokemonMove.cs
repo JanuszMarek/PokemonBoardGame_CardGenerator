@@ -204,7 +204,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class TypeUrl
 	{
 		[JsonProperty("name")]
-		public string Name { get; set; }
+		public PokemonTypeEnum Name { get; set; }
 
 		[JsonProperty("url")]
 		public string Url { get; set; }

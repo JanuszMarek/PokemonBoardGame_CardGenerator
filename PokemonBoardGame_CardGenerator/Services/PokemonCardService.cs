@@ -61,7 +61,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 						LearnMethod = version?.MoveLearnMethod.Name,
 						LevelLearnedAt = version?.LevelLearnedAt,
 						Power = x.Power,
-						PP = x.Pp,
+						PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
 						Type = x.Type.Name,
 						DamageClass = x.DamageClass.Name
 					};
@@ -73,7 +73,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 					Name = x.Stat2.Name,
 					Value = x.BaseStat
 				}).ToList(),
-
+				Types = pokemon.Types.OrderBy(x => x.Slot).Select(x => x.Type2.Name).ToList(),
 			};
 
 			MergeSpecialStatsWithNormal(pokemonCardModel);
