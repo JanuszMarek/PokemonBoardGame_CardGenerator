@@ -12,6 +12,9 @@ namespace PokemonBoardGame_CardGenerator.Services
 		private readonly PokemonDataService pokemonDataService;
 		private readonly PokemonSettings pokemonSettings;
 
+		private const int HpStatMultiplier = 5;
+		private const double PowerMultiplier = 1.5;
+		private const double StatsDivider = 10.0;
 
 		public PokemonCardService(PokemonDataService pokemonDataService, IOptions<PokemonSettings> settings)
 		{
@@ -29,11 +32,56 @@ namespace PokemonBoardGame_CardGenerator.Services
 				pokemonCards.Add(pokemonCard);
 			}
 
+			GetMovesFromPrevEvolutions(pokemonCards);
+			//Safari - https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone#Generation_I_2
+
 			var dir = "Output/";
 			SaveFileHelper.CreateFolderWhenNotExist(pokemonSettings.OutputPath + dir);
 			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "PokemonCardModels", pokemonCards);
+			//await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "CatchRates", pokemonCards.Select(x => (x.Name, x.CaptureRate, (int)Math.Round((decimal)((x.CaptureRate * -0.0238) + 7.07)))));
+
+			// x -> y
+			// A 255 -> 1
+			// B 45 -> 6
+
+			// a = 5/-210 = -0.238
+			// y = -0.238 x +  60,69 +1
+			// y = -0.238x + 10,71+6
 		}
 
+		private void GetMovesFromPrevEvolutions(List<PokemonCardModel> pokemonCards)
+		{
+			foreach (var pokemonCard in pokemonCards)
+			{
+				GetPrevEvoMoves(pokemonCard, new List<EvolutionChain> { pokemonCard.EvolutionChain }, pokemonCards);
+			}
+
+			static void GetPrevEvoMoves(PokemonCardModel pokemon, List<EvolutionChain> evolutionChains, List<PokemonCardModel> pokemonCards)
+			{
+				foreach (var evolutionChain in evolutionChains)
+				{
+					if (evolutionChain.Species.Name.ToLower() != pokemon.Name.ToLower())
+					{
+						var prevEvo = pokemonCards.FirstOrDefault(x => x.Name.ToLower() == evolutionChain.Species.Name.ToLower());
+						if (prevEvo != null)
+						{
+							foreach (var move in prevEvo?.Moves)
+							{
+								var newMove = move.Clone();
+								newMove.SetDamage(pokemon);
+
+								pokemon?.Moves?.Add(newMove);
+							}
+
+							GetPrevEvoMoves(pokemon, evolutionChain.EvolvesTo, pokemonCards);
+						}
+
+						pokemon.Moves = pokemon.Moves.Distinct().ToList();
+					}
+				}
+
+			}
+		}
 
 		public async Task<PokemonCardModel> GetPokemonCardModelAsync(int pokeNo)
 		{
@@ -51,19 +99,22 @@ namespace PokemonBoardGame_CardGenerator.Services
 				Id = pokeNo,
 				Name = pokemon.Name.FirstCharToUpper(),
 				ImageUrl = pokemonImageUrl,
-				CaptureRate = pokemonSpecies.CaptureRate,
-				Moves = moves.Select(x => MapApiMoveToLocalType(x, pokemon)).Where(moveLimitation)
-					.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList(),
+				CaptureRate = (int)Math.Round((decimal)((pokemonSpecies.CaptureRate * -0.0238) + 7.07)),
 				Stats = pokemon.Stats.Select(x => new PokemonCardStatModel()
 				{
 					Name = x.Stat2.Name,
-					Value = x.BaseStat
+					Value = x.Stat2.Name == "hp" ? x.BaseStat * HpStatMultiplier : x.BaseStat,
 				}).ToList(),
 				Types = pokemon.Types.OrderBy(x => x.Slot).Select(x => x.Type2.Name).ToList(),
-				EvolutionChain = evolutionChain.Chain
+				EvolutionChain = evolutionChain.Chain,
+				PalParkEncounters = pokemonSpecies.PalParkEncounters
 			};
 
 			MergeSpecialStatsWithNormal(pokemonCardModel);
+			DivideStatsToBetterExperience(pokemonCardModel);
+
+			pokemonCardModel.Moves = moves.Select(x => MapApiMoveToLocalType(x, pokemon, pokemonCardModel)).Where(moveLimitation)
+				.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList();
 
 			return pokemonCardModel;
 
@@ -97,6 +148,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 						normalStat.Value = (normalStat.Value + stat.Value) / 2;
 						statsToRemove.Add(stat);
 					}
+
+					
 				}
 				foreach (var stat in statsToRemove)
 				{
@@ -104,23 +157,34 @@ namespace PokemonBoardGame_CardGenerator.Services
 				}
 			}
 
-			static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x, Pokemon pokemon)
+			static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x, Pokemon pokemon, PokemonCardModel cardModel)
 			{
 				var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
 				var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
 
-				return new PokemonCardMoveModel()
+				var move =  new PokemonCardMoveModel()
 				{
 					Name = x.Name,
-					Accuracy = x.Accuracy,
+					Accuracy = (int?)Math.Round(x.Accuracy.GetValueOrDefault() / 10.0),
 					LearnMethod = version?.MoveLearnMethod.Name,
 					LevelLearnedAt = version?.LevelLearnedAt,
-					Power = x.Power,
+					Power = (int?)Math.Round((x.Power.GetValueOrDefault() / StatsDivider) * PowerMultiplier),
 					PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
 					Type = x.Type.Name,
 					DamageClass = x.DamageClass.Name,
 					Description = x.EffectEntries.FirstOrDefault()?.ShortEffect.Replace("$effect_chance", x.EffectChance)
 				};
+
+				move.SetDamage(cardModel);
+				return move;
+			}
+		}
+
+		private void DivideStatsToBetterExperience(PokemonCardModel pokemonCardModel)
+		{
+			foreach (var stat in pokemonCardModel.Stats)
+			{
+				stat.Value = (int)Math.Round(stat.Value / StatsDivider);
 			}
 		}
 	}

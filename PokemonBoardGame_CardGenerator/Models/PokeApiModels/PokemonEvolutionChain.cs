@@ -2,7 +2,6 @@
 
 namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 {
-	// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
 	public class Trigger
 	{
 		[JsonProperty("name")]
@@ -97,6 +96,8 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 
 		[JsonProperty("species")]
 		public Species Species { get; set; }
+
+		public string ImageUrl { get; set; }
 	}
 
 	public class PokemonEvolutionChain
