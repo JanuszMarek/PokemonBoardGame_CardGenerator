@@ -11,13 +11,16 @@ namespace PokemonBoardGame_CardGenerator.Models
 		public string? ImageUrl { get; set; }
 		public int? CaptureRate { get; set; }
 
+		public bool? CanSwim { get; set; }
+		public bool? CanRide { get; set; }
+		public bool? CanFly { get; set; }
+
 		public List<PokemonTypeEnum>? Types { get; set; }
 		public List<PokemonCardMoveModel>? Moves { get; set; }
 		public EvolutionChain? EvolutionChain { get; set; }
 		public List<PokemonCardStatModel>? Stats { get; set; }
 
-		public List<PalParkEncounter>? PalParkEncounters { get; set; }
-		//public List<>
+		public List<AreaOccurrenceModel>? Areas { get; set; }
 	}
 
 	public class PokemonCardMoveModel
@@ -90,7 +93,6 @@ namespace PokemonBoardGame_CardGenerator.Models
 	public class AreaOccurrenceModel
 	{
 		public string? Name { get; set; }
-		public int Score { get; set; }
 		public int Rate { get; set; }
 	}
 }

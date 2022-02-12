@@ -33,7 +33,6 @@ namespace PokemonBoardGame_CardGenerator.Services
 			}
 
 			GetMovesFromPrevEvolutions(pokemonCards);
-			//Safari - https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone#Generation_I_2
 
 			var dir = "Output/";
 			SaveFileHelper.CreateFolderWhenNotExist(pokemonSettings.OutputPath + dir);
@@ -47,6 +46,63 @@ namespace PokemonBoardGame_CardGenerator.Services
 			// a = 5/-210 = -0.238
 			// y = -0.238 x +  60,69 +1
 			// y = -0.238x + 10,71+6
+		}
+
+		private List<AreaOccurrenceModel> MapAreas(string pokemonName, List<PalParkEncounter> encounters)
+		{
+			var pokemonsApperInSafari = new List<string>()
+			{
+				"poliwag", "magicarp", "goldeen", "paras", "venonat", "psyduck", "slowpoke", "seaking"
+			};
+
+			var pokemonsApperOnlyInSafari = new List<string>()
+			{
+				"nidoran-f", "nidoran-m", "doduo", "nidorino", "nidorina", "exeggcute", "parasect", "venomoth", "kangaskhan", "scyther", "pinsir", "tauros", "dragonair", "dratini", "chansey"
+			};
+
+			var starters = new List<string>()
+			{
+				"bulbasaur", "ivysaur", "venusaur", "charmander", "charmeleon", "charizard", "squirtle", "wartortle", "blastoise", "pikachu", "raichu"
+			};
+
+			var appearInSafari = pokemonsApperInSafari.Contains(pokemonName.ToLower());
+			var appearOnlyInSafari = pokemonsApperOnlyInSafari.Contains(pokemonName.ToLower());
+			var isStarter = starters.Contains(pokemonName.ToLower());
+			var areas = encounters.Select(x => new AreaOccurrenceModel()
+			{
+				Name = x.Area.Name,
+				Rate = x.Rate
+			}).ToList();
+
+			if (appearInSafari || appearOnlyInSafari)
+			{
+				//Safari - https://bulbapedia.bulbagarden.net/wiki/Kanto_Safari_Zone#Generation_I_2
+				var defaultArea = areas.FirstOrDefault();
+				var safariArea = new AreaOccurrenceModel()
+				{
+					Name = "safari",
+					Rate = defaultArea.Rate
+				};
+
+				if (appearOnlyInSafari)
+				{
+					return new List<AreaOccurrenceModel>() { safariArea };
+				}
+
+				areas.Add(safariArea);
+			}
+			else if (isStarter)
+			{
+				var starter = new AreaOccurrenceModel()
+				{
+					Name = "starter",
+					Rate = 0,
+				};
+
+				return new List<AreaOccurrenceModel>() { starter };
+			}
+
+			return areas;
 		}
 
 		private void GetMovesFromPrevEvolutions(List<PokemonCardModel> pokemonCards)
@@ -94,6 +150,11 @@ namespace PokemonBoardGame_CardGenerator.Services
 			Func<PokemonCardMoveModel, bool> moveLimitation = x => (x.LearnMethod == LearnMethodEnum.LevelUp || x.LearnMethod == LearnMethodEnum.Egg) &&
 					(x.DamageClass == DamageClassEnum.Physical || x.DamageClass == DamageClassEnum.Special || x.DamageClass == DamageClassEnum.Status);
 
+			List<string> ridePokemons = new List<string>()
+			{
+				"Aerodactly", "Arcanine", "Charizard", "Dodrio", "Dragonite", "Gyarados", "Haunter", "Kangaskhan", "Lapras", "Machamp", "Onix", "Persian", "Rapidash", "Rhyhorn", "Rhydon", "Snorlax"
+			};
+
 			var pokemonCardModel = new PokemonCardModel()
 			{
 				Id = pokeNo,
@@ -107,7 +168,10 @@ namespace PokemonBoardGame_CardGenerator.Services
 				}).ToList(),
 				Types = pokemon.Types.OrderBy(x => x.Slot).Select(x => x.Type2.Name).ToList(),
 				EvolutionChain = evolutionChain.Chain,
-				PalParkEncounters = pokemonSpecies.PalParkEncounters
+				Areas = MapAreas(pokemon.Name, pokemonSpecies.PalParkEncounters),
+				CanFly = pokemon.Moves.Any(x => x.Move2.Name == "fly") && pokemon.Weight > 75,
+				CanSwim = pokemon.Moves.Any(x => x.Move2.Name == "surf") && pokemon.Weight > 60,
+				CanRide = ridePokemons.Contains(pokemon.Name.FirstCharToUpper()),
 			};
 
 			MergeSpecialStatsWithNormal(pokemonCardModel);
@@ -149,7 +213,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 						statsToRemove.Add(stat);
 					}
 
-					
+
 				}
 				foreach (var stat in statsToRemove)
 				{
@@ -162,7 +226,7 @@ namespace PokemonBoardGame_CardGenerator.Services
 				var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
 				var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
 
-				var move =  new PokemonCardMoveModel()
+				var move = new PokemonCardMoveModel()
 				{
 					Name = x.Name,
 					Accuracy = (int?)Math.Round(x.Accuracy.GetValueOrDefault() / 10.0),
