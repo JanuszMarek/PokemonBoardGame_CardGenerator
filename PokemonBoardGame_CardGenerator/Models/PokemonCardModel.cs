@@ -17,7 +17,7 @@ namespace PokemonBoardGame_CardGenerator.Models
 
 		public List<PokemonTypeEnum>? Types { get; set; }
 		public List<PokemonCardMoveModel>? Moves { get; set; }
-		public EvolutionChain? EvolutionChain { get; set; }
+		public EvolutionChain EvolutionChain { get; set; }
 		public List<PokemonCardStatModel>? Stats { get; set; }
 
 		public List<AreaOccurrenceModel>? Areas { get; set; }
@@ -40,6 +40,11 @@ namespace PokemonBoardGame_CardGenerator.Models
 		[JsonIgnore]
 		public DamageClassEnum DamageClass { get; set; }
 		public string? Description { get; set; }
+
+		public bool IsAttackingMove()
+		{
+			return DamageClass == DamageClassEnum.Special || DamageClass == DamageClassEnum.Physical;
+		}
 
 		public PokemonCardMoveModel Clone()
 		{

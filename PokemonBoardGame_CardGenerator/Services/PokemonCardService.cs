@@ -24,6 +24,8 @@ namespace PokemonBoardGame_CardGenerator.Services
 
 		public async Task GeneratePokemonCardsAsync()
 		{
+			var dir = "Output/";
+
 			var pokemonCards = new List<PokemonCardModel>();
 			for (var i = pokemonSettings.FirstPokeNo.Value; i <= pokemonSettings.LastPokeNo.Value; i++)
 			{
@@ -33,10 +35,15 @@ namespace PokemonBoardGame_CardGenerator.Services
 			}
 
 			GetMovesFromPrevEvolutions(pokemonCards);
+			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "MovesBeforeLimit", pokemonCards.Select(x => (x.Name, x.Moves)));
 
-			var dir = "Output/";
+			LimitMovesToEvoLvl(pokemonCards);
+			Select4Moves(pokemonCards);
+
 			SaveFileHelper.CreateFolderWhenNotExist(pokemonSettings.OutputPath + dir);
 			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "PokemonCardModels", pokemonCards);
+			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "Stats", pokemonCards.Select(x => (x.Name, x.Stats)));
+			await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "Moves", pokemonCards.Select(x => (x.Name, x.Moves)));
 			//await SaveFileHelper.SavePokemonDataJsonAsync(pokemonSettings.OutputPath + dir, "CatchRates", pokemonCards.Select(x => (x.Name, x.CaptureRate, (int)Math.Round((decimal)((x.CaptureRate * -0.0238) + 7.07)))));
 
 			// x -> y
@@ -46,6 +53,82 @@ namespace PokemonBoardGame_CardGenerator.Services
 			// a = 5/-210 = -0.238
 			// y = -0.238 x +  60,69 +1
 			// y = -0.238x + 10,71+6
+		}
+
+		private void Select4Moves(List<PokemonCardModel> pokemonCards)
+		{
+			foreach (var pokemonCard in pokemonCards)
+			{
+				if (pokemonCard.Moves.Count > 4)
+				{
+					var moves = new List<PokemonCardMoveModel>();
+					foreach (var type in pokemonCard.Types)
+					{
+						var typeAttack = pokemonCard.Moves.FirstOrDefault(x => x.Type == type);
+						if (typeAttack != null)
+						{
+							moves.Add(typeAttack);
+						}
+						else
+						{
+
+						}
+					}
+
+					while (moves.Count < 4)
+					{
+						moves.Add(SelectOptimumMoves(pokemonCard, moves));
+
+						if (moves.Any(x => x == null))
+						{
+							throw new Exception();
+						}
+					}
+
+					pokemonCard.Moves = moves;
+				}
+			}
+		}
+
+		private PokemonCardMoveModel? SelectOptimumMoves(PokemonCardModel pokemonCard, List<PokemonCardMoveModel> moves)
+		{
+			PokemonCardMoveModel toAdd = null;
+			if (!moves.Any(x => x.DamageClass == DamageClassEnum.Status))
+			{
+				toAdd = pokemonCard.Moves.FirstOrDefault(x => x.DamageClass == DamageClassEnum.Status && !moves.Contains(x));
+				if (toAdd != null)
+					return toAdd;
+			}
+
+			if (!moves.Any(x => x.IsAttackingMove() && x.PP >= 2))
+			{
+				toAdd = pokemonCard.Moves.FirstOrDefault(x => x.IsAttackingMove() && x.Type == pokemonCard.Types[0] && x.PP >= 2 && x.Damage > 0 && !moves.Contains(x));
+				if (toAdd != null)
+					return toAdd;
+			}
+
+			if (!moves.Any(x => x.IsAttackingMove() && x.PP >= 2))
+			{
+				toAdd = pokemonCard.Moves.FirstOrDefault(x => x.IsAttackingMove() && x.PP >= 2 && x.Damage > 0 && !moves.Contains(x));
+				if (toAdd != null)
+					return toAdd;
+			}
+
+			toAdd = pokemonCard.Moves.FirstOrDefault(x => x.IsAttackingMove() && x.Type == pokemonCard.Types[0] && x.Damage > 0 && !moves.Contains(x)); 
+			if (toAdd != null)
+				return toAdd;
+
+			toAdd = pokemonCard.Moves.FirstOrDefault(x => x.IsAttackingMove() && x.Type == PokemonTypeEnum.Normal && x.Damage > 0 && !moves.Contains(x));
+			if (toAdd != null)
+				return toAdd;
+
+			toAdd = pokemonCard.Moves.FirstOrDefault(x => x.IsAttackingMove() && !moves.Contains(x));
+			if (toAdd != null)
+				return toAdd;
+
+			toAdd = pokemonCard.Moves.FirstOrDefault(x => !moves.Contains(x));
+
+			return toAdd;
 		}
 
 		private List<AreaOccurrenceModel> MapAreas(string pokemonName, List<PalParkEncounter> encounters)
@@ -132,11 +215,39 @@ namespace PokemonBoardGame_CardGenerator.Services
 							GetPrevEvoMoves(pokemon, evolutionChain.EvolvesTo, pokemonCards);
 						}
 
-						pokemon.Moves = pokemon.Moves.Distinct().ToList();
+						pokemon.Moves = pokemon.Moves.Distinct().OrderBy(x => x.DamageClass).ThenByDescending(x => x.Damage).ToList();
 					}
 				}
 
 			}
+		}
+
+		private void LimitMovesToEvoLvl(List<PokemonCardModel> pokemonCards)
+		{
+			foreach (var pokemonCard in pokemonCards)
+			{
+				var lvl = GetEvolutionLevel(new List<EvolutionChain> { pokemonCard.EvolutionChain }, pokemonCard.Name);
+				var limitedMoves = pokemonCard.Moves.Where(x => x.LevelLearnedAt == 0 || !lvl.HasValue || x.LevelLearnedAt <= lvl).ToList();
+				if (limitedMoves.Count > 4)
+				{
+					pokemonCard.Moves = limitedMoves;
+				}
+			}
+		}
+
+		private int? GetEvolutionLevel(List<EvolutionChain> evolutions, string pokeName)
+		{
+			foreach (var evolutionChain in evolutions)
+			{
+				if (evolutionChain.Species.Name.ToLower() == pokeName.ToLower())
+				{
+					return evolutionChain.EvolvesTo.Where(x => x.EvolutionDetails.Any(x => x.Trigger.Name == "level-up")).FirstOrDefault()?
+						.EvolutionDetails.Where(x => x.Trigger.Name == "level-up").FirstOrDefault()?.MinLevel;
+				}
+				return GetEvolutionLevel(evolutionChain.EvolvesTo, pokeName);
+			}
+
+			return null;
 		}
 
 		public async Task<PokemonCardModel> GetPokemonCardModelAsync(int pokeNo)
@@ -177,15 +288,25 @@ namespace PokemonBoardGame_CardGenerator.Services
 			MergeSpecialStatsWithNormal(pokemonCardModel);
 			DivideStatsToBetterExperience(pokemonCardModel);
 
-			pokemonCardModel.Moves = moves.Select(x => MapApiMoveToLocalType(x, pokemon, pokemonCardModel)).Where(moveLimitation)
-				.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Power).ToList();
+			var mappedMoves = moves.Select(x => MapApiMoveToLocalType(x, pokemon, pokemonCardModel));
+			var limitedMoves = mappedMoves.Where(moveLimitation);
+
+			if (limitedMoves.Count() < 4)
+			{
+				limitedMoves = mappedMoves;
+			}
+
+			pokemonCardModel.Moves = limitedMoves.OrderBy(x => x.DamageClass).ThenByDescending(x => x.Damage).ToList();
 
 			return pokemonCardModel;
 
 			async Task<List<PokemonMove>> GetPokemonMoves(Pokemon pokemon)
 			{
-				var movesToGet = pokemon.Moves.Where(x => x.VersionGroupDetails.Any(v => v.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName() &&
-					(v.MoveLearnMethod.Name == LearnMethodEnum.LevelUp || v.MoveLearnMethod.Name == LearnMethodEnum.Machine || v.MoveLearnMethod.Name == LearnMethodEnum.Egg)));
+				var movesToGet = pokemon.Moves.Where(x => x.VersionGroupDetails.Any(v => 
+					v.VersionGroup.Name == VersionGroupEnum.FireRed_LeafGreen.ToSerializationName() ||
+					v.VersionGroup.Name == VersionGroupEnum.HeartGold_SoulSilver.ToSerializationName() ||
+					v.VersionGroup.Name == VersionGroupEnum.OmegaRuby_AlphaSapphire.ToSerializationName()
+				));
 
 				var moveNames = movesToGet.Select(x => x.Move2.Name).Distinct();
 				var moves = new List<PokemonMove>();
@@ -224,7 +345,15 @@ namespace PokemonBoardGame_CardGenerator.Services
 			static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x, Pokemon pokemon, PokemonCardModel cardModel)
 			{
 				var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
-				var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRedLeafGreen.ToSerializationName());
+				var version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.FireRed_LeafGreen.ToSerializationName());
+				if (version == null)
+				{
+					version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.HeartGold_SoulSilver.ToSerializationName());
+				}
+				if (version == null)
+				{
+					version = moveFromPokemon.VersionGroupDetails.FirstOrDefault(x => x.VersionGroup.Name == VersionGroupEnum.OmegaRuby_AlphaSapphire.ToSerializationName());
+				}
 
 				var move = new PokemonCardMoveModel()
 				{
@@ -236,7 +365,12 @@ namespace PokemonBoardGame_CardGenerator.Services
 					PP = x.Pp / 10 == 0 ? 1 : x.Pp / 10,
 					Type = x.Type.Name,
 					DamageClass = x.DamageClass.Name,
-					Description = x.EffectEntries.FirstOrDefault()?.ShortEffect.Replace("$effect_chance", x.EffectChance)
+					Description = x.EffectEntries.FirstOrDefault()?.ShortEffect
+						.Replace("$effect_chance", x.EffectChance)
+						.Replace("Special", "")
+						.Replace("several", "2-5")
+						.Replace(" for 1-8 turns", "")
+						.Replace("  ", " ")
 				};
 
 				move.SetDamage(cardModel);
