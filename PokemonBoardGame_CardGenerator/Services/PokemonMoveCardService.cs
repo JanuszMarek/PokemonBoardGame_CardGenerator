@@ -10,22 +10,23 @@ namespace PokemonBoardGame_CardGenerator.Services
     {
         public async Task<IEnumerable<PokemonCardMoveModel>> GetBestPokemonMoves(Pokemon pokemon, PokemonSpecies pokemonSpecies)
         {
-            var allMoves = OrderMoves(await GetAllPokemonMoves(pokemon));
+            var allMoves = await GetAllPokemonMoves(pokemon);
             allMoves.AddRange(await GetMovesFromPrevEvolutions(pokemonSpecies) ?? []);
 
-            var bestmoves = Select4BestMoves(pokemon, allMoves);
+            var bestmoves = Select4BestMovesV2(pokemon, OrderMoves(allMoves));
 
             return bestmoves.Select(MapApiMoveToLocalType);
         }
 
         private static List<PokemonMove> OrderMoves(List<PokemonMove> pokemonMoves)
         {
-            return [.. pokemonMoves.OrderByDescending(x => x.Power).ThenByDescending(x => x.Pp).ThenByDescending(x => x.Accuracy)];
+            return [.. pokemonMoves.OrderByDescending(x => x.Type.Name).ThenByDescending(x => x.Power).ThenByDescending(x => x.Pp).ThenByDescending(x => x.Accuracy)];
         }
 
         private async Task<List<PokemonMove>> GetAllPokemonMoves(Pokemon pokemon)
         {
-            var moveNames = pokemon.Moves.Select(x => x.Move2.Name).Distinct();
+            string[] moveMethodsToFilterOut = ["machine", "tutor"];
+            var moveNames = pokemon.Moves.Where(x => !x.VersionGroupDetails.Any(y => moveMethodsToFilterOut.Contains(y.MoveLearnMethod.Name))).Select(x => x.Move2.Name).Distinct();
             var moves = new List<PokemonMove>();
 
             foreach (var moveName in moveNames)
@@ -45,21 +46,45 @@ namespace PokemonBoardGame_CardGenerator.Services
             var prevEvoPokemonSpecies = await pokemonDataService.GetPokemonSpeciesAsync(prevEvoPokemonId);
             var prevEvoPokemon = await pokemonDataService.GetPokemonAsync(prevEvoPokemonId);
 
-            var moves = OrderMoves(await GetAllPokemonMoves(prevEvoPokemon));
-            moves.AddRange(OrderMoves(await GetMovesFromPrevEvolutions(prevEvoPokemonSpecies) ?? []));
+            var moves = await GetAllPokemonMoves(prevEvoPokemon);
+            moves.AddRange(await GetMovesFromPrevEvolutions(prevEvoPokemonSpecies) ?? []);
 
             return moves;
+        }
+
+        private List<PokemonMove?> Select4BestMovesV2(Pokemon pokemon, List<PokemonMove> allMoves)
+        {
+            PokemonMove? move1 = null, move2 = null, move3 = null, move4 = null;
+
+            var pokemonTypes = pokemon.Types.OrderBy(x => x.Slot).Select(x => (x.Type?.Name?.ToEnum<PokemonTypeEnum>()).Value);
+
+            move1 = allMoves.FirstOrDefault(x => x.Type.Name == pokemonTypes.First() && x.DamageClass.Name != DamageClassEnum.Status);
+
+            if (pokemonTypes.Count() > 1)
+            {
+                move2 = allMoves.FirstOrDefault(x => x.Type.Name == pokemonTypes.Last() && x.DamageClass.Name != DamageClassEnum.Status);
+            }
+            else
+            {
+                move2 = allMoves.FirstOrDefault(x => x.Type.Name == pokemonTypes.First() && x.DamageClass.Name != DamageClassEnum.Status && x.Id != move1?.Id);
+            }
+
+            move3 = allMoves.FirstOrDefault(x => (pokemonTypes.Contains(x.Type.Name) || x.Type.Name == PokemonTypeEnum.Normal) && x.DamageClass.Name == DamageClassEnum.Status);
+
+            move4 = allMoves.FirstOrDefault(x => (pokemonTypes.Contains(x.Type.Name) || x.Type.Name == PokemonTypeEnum.Normal) && x.DamageClass.Name == DamageClassEnum.Physical && x.Pp > 30);
+
+            return new List<PokemonMove?> { move1, move2, move3, move4 };
         }
 
         private List<PokemonMove> Select4BestMoves(Pokemon pokemon, List<PokemonMove> allMoves)
         {
             List<PokemonMove> bestMoves = [];
             bool hasType1Move = false,
-                hasType2Move = false, 
-                hasStrongMove = false, 
-                hasManyPPMove = false, 
-                hasStatusMove = false, 
-                hasPhysicalAttack = false, 
+                hasType2Move = false,
+                hasStrongMove = false,
+                hasManyPPMove = false,
+                hasStatusMove = false,
+                hasPhysicalAttack = false,
                 hasSpecialAttack = false;
 
             var pokemonTypes = pokemon.Types.ToDictionary(x => x.Slot, x => x.Type?.Name?.ToEnum<PokemonTypeEnum>());
@@ -125,9 +150,9 @@ namespace PokemonBoardGame_CardGenerator.Services
             return bestMoves;
         }
 
-        private static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x)
+        private static PokemonCardMoveModel? MapApiMoveToLocalType(PokemonMove x)
         {
-            return new PokemonCardMoveModel()
+            return x != null ? new PokemonCardMoveModel()
             {
                 Name = x.Name,
                 Accuracy = (int?)Math.Round(x.Accuracy.GetValueOrDefault() / 10.0),
@@ -142,7 +167,7 @@ namespace PokemonBoardGame_CardGenerator.Services
                     .Replace("several", "2-5")
                     .Replace(" for 1-8 turns", "")
                     .Replace("  ", " ")
-            };
+            } : null;
         }
 
         private static int? PowerTransformation(int? initPower)
