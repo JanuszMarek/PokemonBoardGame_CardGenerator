@@ -1,16 +1,26 @@
-﻿using PokemonBoardGame_CardGenerator.Models;
+﻿using PokemonBoardGame_CardGenerator.Enums;
+using PokemonBoardGame_CardGenerator.Extensions;
+using PokemonBoardGame_CardGenerator.Helpers;
+using PokemonBoardGame_CardGenerator.Models;
 using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
 
 namespace PokemonBoardGame_CardGenerator.Services
 {
     public class PokemonMoveCardService(PokemonDataService pokemonDataService)
     {
-        public async Task<List<PokemonCardMoveModel>> GetBestPokemonMoves(Pokemon pokemon, List<EvolutionChain> evolutionChain)
+        public async Task<IEnumerable<PokemonCardMoveModel>> GetBestPokemonMoves(Pokemon pokemon, PokemonSpecies pokemonSpecies)
         {
-            var allMoves = await GetAllPokemonMoves(pokemon);
+            var allMoves = OrderMoves(await GetAllPokemonMoves(pokemon));
+            allMoves.AddRange(await GetMovesFromPrevEvolutions(pokemonSpecies) ?? []);
 
+            var bestmoves = Select4BestMoves(pokemon, allMoves);
 
-            return allMoves.Select(x => MapApiMoveToLocalType(x, pokemon)).ToList();
+            return bestmoves.Select(MapApiMoveToLocalType);
+        }
+
+        private static List<PokemonMove> OrderMoves(List<PokemonMove> pokemonMoves)
+        {
+            return [.. pokemonMoves.OrderByDescending(x => x.Power).ThenByDescending(x => x.Pp).ThenByDescending(x => x.Accuracy)];
         }
 
         private async Task<List<PokemonMove>> GetAllPokemonMoves(Pokemon pokemon)
@@ -27,58 +37,104 @@ namespace PokemonBoardGame_CardGenerator.Services
             return moves;
         }
 
-        //private List<PokemonMove> GetMovesFromPrevEvolutions(Pokemon pokemon, List<EvolutionChain> evolutionChains, List<PokemonMove> moves = null)
-        //{
-        //    moves ??= new List<PokemonMove>();
-
-        //    foreach (var evolution in evolutionChains)
-        //    {
-        //        if (evolution.Species == pokemon.Species) return moves;
-
-
-        //    }
-
-
-        //    static void GetPrevEvoMoves(PokemonCardModel pokemon, List<EvolutionChain> evolutionChains, List<PokemonCardModel> pokemonCards)
-        //    {
-        //        foreach (var evolutionChain in evolutionChains)
-        //        {
-        //            if (evolutionChain.Species.Name.ToLower() != pokemon.Name.ToLower())
-        //            {
-        //                var prevEvo = pokemonCards.FirstOrDefault(x => x.Name.ToLower() == evolutionChain.Species.Name.ToLower());
-        //                if (prevEvo != null)
-        //                {
-        //                    foreach (var move in prevEvo?.Moves)
-        //                    {
-        //                        var newMove = move.Clone();
-        //                        newMove.SetDamage(pokemon);
-
-        //                        pokemon?.Moves?.Add(newMove);
-        //                    }
-
-        //                    GetPrevEvoMoves(pokemon, evolutionChain.EvolvesTo, pokemonCards);
-        //                }
-
-        //                pokemon.Moves = pokemon.Moves.Distinct().OrderBy(x => x.DamageClass).ThenByDescending(x => x.Damage).ToList();
-        //            }
-        //        }
-        //    }
-        //}
-
-        private static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x, Pokemon pokemon)
+        private async Task<List<PokemonMove>?> GetMovesFromPrevEvolutions(PokemonSpecies pokemonSpecies)
         {
-            var moveFromPokemon = pokemon.Moves.FirstOrDefault(p => p.Move2.Name == x.Name);
-            var version = moveFromPokemon?.VersionGroupDetails.LastOrDefault();
+            if (pokemonSpecies?.EvolvesFromSpecies == null) return null;
 
-            var move = new PokemonCardMoveModel()
+            var prevEvoPokemonId = UrlHelper.GetPokemonIdFromSpecies(pokemonSpecies?.EvolvesFromSpecies).GetValueOrDefault();
+            var prevEvoPokemonSpecies = await pokemonDataService.GetPokemonSpeciesAsync(prevEvoPokemonId);
+            var prevEvoPokemon = await pokemonDataService.GetPokemonAsync(prevEvoPokemonId);
+
+            var moves = OrderMoves(await GetAllPokemonMoves(prevEvoPokemon));
+            moves.AddRange(OrderMoves(await GetMovesFromPrevEvolutions(prevEvoPokemonSpecies) ?? []));
+
+            return moves;
+        }
+
+        private List<PokemonMove> Select4BestMoves(Pokemon pokemon, List<PokemonMove> allMoves)
+        {
+            List<PokemonMove> bestMoves = [];
+            bool hasType1Move = false,
+                hasType2Move = false, 
+                hasStrongMove = false, 
+                hasManyPPMove = false, 
+                hasStatusMove = false, 
+                hasPhysicalAttack = false, 
+                hasSpecialAttack = false;
+
+            var pokemonTypes = pokemon.Types.ToDictionary(x => x.Slot, x => x.Type?.Name?.ToEnum<PokemonTypeEnum>());
+
+            foreach (var move in allMoves)
+            {
+                if (bestMoves.Count == 4) break;
+
+                var canBeAdded = false;
+
+                if (move.DamageClass.Name == DamageClassEnum.Status)
+                {
+                    if (!hasStatusMove)
+                    {
+                        hasStatusMove = true;
+                        canBeAdded = true;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                if (pokemonTypes.TryGetValue(1, out PokemonTypeEnum? value) && move.Type.Name == value.Value && !hasType1Move && move.DamageClass.Name != DamageClassEnum.Status)
+                {
+                    hasType1Move = true;
+                    canBeAdded = true;
+                }
+
+                if (pokemonTypes.TryGetValue(2, out PokemonTypeEnum? value2) && move.Type.Name == value2.Value && !hasType2Move && move.DamageClass.Name != DamageClassEnum.Status)
+                {
+                    hasType2Move = true;
+                    canBeAdded = true;
+                }
+
+                if (move.DamageClass.Name == DamageClassEnum.Special && !hasSpecialAttack)
+                {
+                    hasSpecialAttack = true;
+                    canBeAdded = true;
+                }
+
+                if (move.DamageClass.Name == DamageClassEnum.Physical && !hasPhysicalAttack)
+                {
+                    hasPhysicalAttack = true;
+                    canBeAdded = true;
+                }
+
+                if (move.Power > 140 && !hasStrongMove)
+                {
+                    hasStrongMove = true;
+                    canBeAdded = true;
+                }
+
+                if (move.Pp > 30 && !hasManyPPMove)
+                {
+                    hasManyPPMove = true;
+                    canBeAdded = true;
+                }
+
+                if (canBeAdded) bestMoves.Add(move);
+            }
+
+            return bestMoves;
+        }
+
+        private static PokemonCardMoveModel MapApiMoveToLocalType(PokemonMove x)
+        {
+            return new PokemonCardMoveModel()
             {
                 Name = x.Name,
                 Accuracy = (int?)Math.Round(x.Accuracy.GetValueOrDefault() / 10.0),
-                LearnMethod = version?.MoveLearnMethod.Name,
-                LevelLearnedAt = version?.LevelLearnedAt,
                 PowerUp = PowerTransformation(x.Power),
                 MoveUsage = x.Pp / 5 == 0 ? 1 : x.Pp / 5,
                 Type = x.Type.Name,
+                EffectChance = x.EffectChance,
                 DamageClass = x.DamageClass.Name,
                 Description = x.EffectEntries.FirstOrDefault()?.ShortEffect
                     .Replace("$effect_chance", x.EffectChance)
@@ -87,8 +143,6 @@ namespace PokemonBoardGame_CardGenerator.Services
                     .Replace(" for 1-8 turns", "")
                     .Replace("  ", " ")
             };
-
-            return move;
         }
 
         private static int? PowerTransformation(int? initPower)

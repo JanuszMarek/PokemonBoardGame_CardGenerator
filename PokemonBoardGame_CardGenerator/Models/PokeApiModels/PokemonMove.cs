@@ -10,7 +10,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public object UseAfter { get; set; }
 
 		[JsonProperty("use_before")]
-		public List<PokemonLookup> UseBefore { get; set; }
+		public List<global::PokemonLookup> UseBefore { get; set; }
 	}
 
 	public class Super
@@ -61,7 +61,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string Effect { get; set; }
 
 		[JsonProperty("language")]
-		public PokemonLookup Language { get; set; }
+		public global::PokemonLookup Language { get; set; }
 
 		[JsonProperty("short_effect")]
 		public string ShortEffect { get; set; }
@@ -73,7 +73,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string FlavorText { get; set; }
 
 		[JsonProperty("language")]
-		public PokemonLookup Language { get; set; }
+		public global::PokemonLookup Language { get; set; }
 
 		[JsonProperty("version_group")]
 		public VersionGroup VersionGroup { get; set; }
@@ -82,13 +82,13 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class Meta
 	{
 		[JsonProperty("ailment")]
-		public PokemonLookup Ailment { get; set; }
+		public global::PokemonLookup Ailment { get; set; }
 
 		[JsonProperty("ailment_chance")]
 		public int AilmentChance { get; set; }
 
 		[JsonProperty("category")]
-		public PokemonLookup Category { get; set; }
+		public global::PokemonLookup Category { get; set; }
 
 		[JsonProperty("crit_rate")]
 		public int CritRate { get; set; }
@@ -121,7 +121,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class PokemonMoveName
 	{
 		[JsonProperty("language")]
-		public PokemonLookup Language { get; set; }
+		public global::PokemonLookup Language { get; set; }
 
 		[JsonProperty("name")]
 		public string Name { get; set; }

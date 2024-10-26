@@ -14,5 +14,15 @@
 
 			return string.Empty;
 		}
-	}
+
+        public static T? ToEnum<T>(this string value) where T : struct, Enum
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return null;
+            }
+
+            return Enum.TryParse(value, true, out T result) ? result : null;
+        }
+    }
 }

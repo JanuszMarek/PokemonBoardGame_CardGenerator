@@ -6,18 +6,16 @@ namespace PokemonBoardGame_CardGenerator.Services
 {
     public class PokemonEvolutionCardService(PokemonDataService pokemonDataService)
     {
-        private static int? GetPokemonIdFromSpecies(Species species) => UrlHelper.GetIdFromUrl(species?.Url, "pokemon-species/");
-
         public async Task<List<PokemonCardEvolution>?> GetPokemonCardEvolutions(Pokemon pokemon, PokemonEvolutionChain pokemonEvolutionChain)
         {
             var nextEvolutionChain = GetNextEvolutionChain(pokemon, pokemonEvolutionChain.Chain);
             if (nextEvolutionChain == null || nextEvolutionChain.EvolvesTo == null) return null;
 
-            List<PokemonCardEvolution> pokemonCardEvolutions = new();
+            List<PokemonCardEvolution> pokemonCardEvolutions = [];
             foreach (var nextEvolution in nextEvolutionChain.EvolvesTo)
             {
                 var evolutionCardModel = new PokemonCardEvolution();
-                evolutionCardModel.PokemonId = GetPokemonIdFromSpecies(nextEvolution.Species).GetValueOrDefault();
+                evolutionCardModel.PokemonId = UrlHelper.GetPokemonIdFromSpecies(nextEvolution.Species).GetValueOrDefault();
 
                 evolutionCardModel.Name = nextEvolution.Species?.Name;
                 var nextEvolutionSpecies = await pokemonDataService.GetPokemonSpeciesAsync(evolutionCardModel.PokemonId);
@@ -65,7 +63,7 @@ namespace PokemonBoardGame_CardGenerator.Services
                         case "use-item":
                             {
                                 cardEvolutionDetail.Trigger = evolutionDetail.Item.Name;
-                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync(evolutionDetail.Item.Name);
+                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync(evolutionDetail.Item.Url);
                             }
                             break;
                         case "level-up":
@@ -78,13 +76,13 @@ namespace PokemonBoardGame_CardGenerator.Services
                                         case "day":
                                             {
                                                 cardEvolutionDetail.Trigger = "sun-stone";
-                                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync(cardEvolutionDetail.Trigger);
+                                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync("https://pokeapi.co/api/v2/item/80");
                                             }
                                             break;
                                         case "night":
                                             {
                                                 cardEvolutionDetail.Trigger = "dusk-stone";
-                                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync(cardEvolutionDetail.Trigger);
+                                                cardEvolutionDetail.TriggerImageUrl = await pokemonDataService.GetPokemonItemAsync("https://pokeapi.co/api/v2/item/108");
                                             }
                                             break;
                                     }
@@ -92,7 +90,7 @@ namespace PokemonBoardGame_CardGenerator.Services
                                 }
                                 
                                 evolutionDetail.MinLevel ??= evolutionDetail.MinHappiness ?? evolutionDetail.MinBeauty ?? evolutionDetail.MinAffection ?? null;
-                                cardEvolutionDetail.Trigger = (evolutionDetail.MinLevel / 10).ToString() ?? "3";
+                                cardEvolutionDetail.Trigger = Math.Ceiling((evolutionDetail.MinLevel.GetValueOrDefault() / 10.0)).ToString() ?? "3";
                                 if (evolutionDetail.Location != null)
                                 {
                                     cardEvolutionDetail.Location = evolutionDetail.Location.Name;

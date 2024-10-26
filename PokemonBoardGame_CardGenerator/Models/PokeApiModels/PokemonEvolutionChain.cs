@@ -112,7 +112,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public bool IsBaby { get; set; }
 
 		[JsonProperty("species")]
-		public Species Species { get; set; }
+		public global::PokemonLookup Species { get; set; }
 
 		public string ImageUrl { get; set; }
 	}

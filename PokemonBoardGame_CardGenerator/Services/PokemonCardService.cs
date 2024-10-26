@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
+using PokemonBoardGame_CardGenerator.Enums;
 using PokemonBoardGame_CardGenerator.Extensions;
 using PokemonBoardGame_CardGenerator.Helpers;
 using PokemonBoardGame_CardGenerator.Models;
+using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
 using PokemonBoardGame_CardGenerator.Options;
 
 namespace PokemonBoardGame_CardGenerator.Services
@@ -52,56 +54,23 @@ namespace PokemonBoardGame_CardGenerator.Services
             var pokemonImageUrl = pokemonDataService.GetPokemonPokedexImageUrlAsync(pokeNo);
             var evolutionChain = await pokemonDataService.GetPokemonPokemonEvolutionChainAsync(pokemonSpecies.EvolutionChain.Url);
 
-
-            //var nextEvolution = GetNextEvolutions(pokemon, new List<EvolutionChain> { evolutionChain.Chain });
-
-            //var nextEvolutionMinLevel = nextEvolution?.SelectMany(x => x.EvolutionDetails)?.Select(x => x.MinLevel)?.Min();
-
             var pokemonCardModel = new PokemonCardModel()
             {
                 Id = pokeNo,
                 Name = pokemon.Name.FirstCharToUpper(),
                 ImageUrl = pokemonImageUrl,
                 CaptureRate = (int)Math.Round((decimal)(pokemonSpecies.CaptureRate * -0.0238 + 7.07)),
-                Stats = pokemon.Stats.Select(x => new PokemonCardStatModel()
-                {
-                    Name = x.Stat2.Name,
-                    Value = x.Stat2.Name == "hp" ? x.BaseStat * HpStatMultiplier : x.BaseStat,
-                }).ToList(),
-                Types = pokemon.Types.OrderBy(x => x.Slot).Select(x => x.Type2.Name).ToList(),
-                //EvolutionChain = evolutionChain.Chain,
+                Stats = pokemon.Stats.Select(GetPokemonStat).ToList(),
+                Types = pokemon.Types.OrderBy(x => x.Slot).Select(x => x.Type.Name).ToList(),
+                Evolutions = await pokemonEvolutionCardService.GetPokemonCardEvolutions(pokemon, evolutionChain),
                 Areas = MapAreas(pokemon.Name, pokemonSpecies.PalParkEncounters),
                 CanFly = pokemon.Moves.Any(x => x.Move2.Name == "fly") && pokemon.Weight > 75,
                 CanSwim = pokemon.Moves.Any(x => x.Move2.Name == "surf") && pokemon.Weight > 60,
                 CanRide = CanRidePokemons.Contains(pokemon.Name.FirstCharToUpper()),
-                //Moves = await pokemonMoveService.GetBestPokemonMoves(pokemon, new List<EvolutionChain> { evolutionChain.Chain }),
+                Moves = (await pokemonMoveCardService.GetBestPokemonMoves(pokemon, pokemonSpecies))?.ToList(),
             };
 
-            DivideStatsToBetterExperience(pokemonCardModel);
-
             return pokemonCardModel;
-
-            static void MergeSpecialStatsWithNormal(PokemonCardModel pokemonCardModel)
-            {
-                var statsToRemove = new List<PokemonCardStatModel>();
-                foreach (var stat in pokemonCardModel.Stats)
-                {
-                    var normalStatName = stat.Name.GetSubstringAfter("special-");
-                    if (!string.IsNullOrEmpty(normalStatName))
-                    {
-                        var normalStat = pokemonCardModel.Stats.FirstOrDefault(x => x.Name == normalStatName);
-
-                        normalStat.Value = (normalStat.Value + stat.Value) / 2;
-                        statsToRemove.Add(stat);
-                    }
-
-
-                }
-                foreach (var stat in statsToRemove)
-                {
-                    pokemonCardModel.Stats.Remove(stat);
-                }
-            }
         }
 
 
@@ -162,15 +131,13 @@ namespace PokemonBoardGame_CardGenerator.Services
             return areas;
         }
 
-
-
-
-        private void DivideStatsToBetterExperience(PokemonCardModel pokemonCardModel)
+        private PokemonCardStatModel GetPokemonStat(PokemonStat stat)
         {
-            foreach (var stat in pokemonCardModel.Stats)
+            return new PokemonCardStatModel()
             {
-                stat.Value = (int)Math.Round(stat.Value / StatsDivider);
-            }
+                Name = stat.Stat.Name,
+                Value = (int)((stat.Stat.Name == "hp" ? stat.BaseStat * HpStatMultiplier : stat.BaseStat) / StatsDivider),
+            };
         }
     }
 }

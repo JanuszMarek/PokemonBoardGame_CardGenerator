@@ -6,6 +6,7 @@ using PokemonBoardGame_CardGenerator.HttpClients.Implementations;
 using PokemonBoardGame_CardGenerator.Models;
 using PokemonBoardGame_CardGenerator.Models.PokeApiModels;
 using PokemonBoardGame_CardGenerator.Options;
+using System;
 
 namespace PokemonBoardGame_CardGenerator.Services
 {
@@ -18,7 +19,7 @@ namespace PokemonBoardGame_CardGenerator.Services
         private Dictionary<int, PokemonSpecies> PokemonSpecies = [];
         private Dictionary<string, PokemonEvolutionChain> PokemonEvolutionChains = [];
         private Dictionary<int, string> PokemonImages = [];
-        private Dictionary<string, string> PokemonItems = [];
+        private Dictionary<int, string> PokemonItems = [];
 
         public async Task<Pokemon> GetPokemonAsync(int id)
         {
@@ -60,12 +61,14 @@ namespace PokemonBoardGame_CardGenerator.Services
             return PokemonMoves[name];
         }
 
-        public async Task<string> GetPokemonItemAsync(string name)
+        public async Task<string> GetPokemonItemAsync(string itemUrl)
         {
-            if (!PokemonItems.ContainsKey(name))
-                PokemonItems.TryAdd(name, (await GetPokemonItemDataAsync(name))?.Sprites?.Default);
+            var no = UrlHelper.GetIdFromUrl(itemUrl, "item/");
 
-            return PokemonItems[name];
+            if (!PokemonItems.ContainsKey(no))
+                PokemonItems.TryAdd(no, (await GetPokemonItemDataAsync(itemUrl))?.Sprites?.Default);
+
+            return PokemonItems[no];
         }
 
         public string GetPokemonImageUrl(int pokeNo)

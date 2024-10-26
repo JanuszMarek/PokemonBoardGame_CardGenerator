@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using PokemonBoardGame_CardGenerator.Enums;
 
 namespace PokemonBoardGame_CardGenerator.Models
@@ -22,7 +23,7 @@ namespace PokemonBoardGame_CardGenerator.Models
         public bool IsLegendary { get; set; }
         public bool IsMythical { get; set; }
 
-        public List<PokemonTypeEnum>? Types { get; set; }
+        public List<string>? Types { get; set; }
 		public List<PokemonCardMoveModel>? Moves { get; set; }
 		public List<PokemonCardEvolution>? Evolutions { get; set; }
 		public List<PokemonCardStatModel>? Stats { get; set; }
@@ -56,20 +57,19 @@ namespace PokemonBoardGame_CardGenerator.Models
 		public int? MoveUsage { get; set; }
 
 		public int? Accuracy { get; set; }
-		public PokemonTypeEnum Type { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public PokemonTypeEnum Type { get; set; }
 
 		public string? Description { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
         public DamageClassEnum DamageClass { get; set; }
+
+        public string EffectChance { get; set; }
 
         public bool IsAttackingMove()
 		{
 			return DamageClass == DamageClassEnum.Special || DamageClass == DamageClassEnum.Physical;
 		}
-
-        [JsonIgnore]
-        public int? LevelLearnedAt { get; set; }
-        [JsonIgnore]
-        public LearnMethodEnum? LearnMethod { get; set; }
         
         public PokemonCardMoveModel Clone()
 		{
@@ -79,8 +79,6 @@ namespace PokemonBoardGame_CardGenerator.Models
 				Accuracy = Accuracy,
 				DamageClass = DamageClass,
 				Description = Description,
-				LearnMethod = LearnMethod,
-				LevelLearnedAt = LevelLearnedAt,
 				PowerUp = PowerUp,
 				MoveUsage = MoveUsage,
 				Type = Type

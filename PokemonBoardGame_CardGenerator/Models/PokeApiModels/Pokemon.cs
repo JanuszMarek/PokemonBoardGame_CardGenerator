@@ -51,19 +51,10 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public Version Version { get; set; }
 	}
 
-	public class Move2
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
 	public class MoveLearnMethod
 	{
 		[JsonProperty("name")]
-		public LearnMethodEnum Name { get; set; }
+		public string Name { get; set; }
 
 		[JsonProperty("url")]
 		public string Url { get; set; }
@@ -93,20 +84,12 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 	public class Move
 	{
 		[JsonProperty("move")]
-		public Move2 Move2 { get; set; }
+		public PokemonLookup Move2 { get; set; }
 
 		[JsonProperty("version_group_details")]
 		public List<VersionGroupDetail> VersionGroupDetails { get; set; }
 	}
 
-	public class Species
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
 
 	//public class DreamWorld
 	//{
@@ -621,16 +604,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		//public Versions Versions { get; set; }
 	}
 
-	public class Stat2
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Stat
+	public class PokemonStat
 	{
 		[JsonProperty("base_stat")]
 		public int BaseStat { get; set; }
@@ -639,25 +613,16 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public int Effort { get; set; }
 
 		[JsonProperty("stat")]
-		public Stat2 Stat2 { get; set; }
+		public global::PokemonLookup? Stat { get; set; }
 	}
 
-	public class Type2
-	{
-		[JsonProperty("name")]
-		public PokemonTypeEnum Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Type
+	public class PokemonType
 	{
 		[JsonProperty("slot")]
 		public int Slot { get; set; }
 
 		[JsonProperty("type")]
-		public Type2 Type2 { get; set; }
+		public PokemonLookup? Type { get; set; }
 	}
 
 	public class Pokemon
@@ -702,16 +667,16 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public List<object> PastTypes { get; set; }
 
 		[JsonProperty("species")]
-		public Species Species { get; set; }
+		public PokemonLookup Species { get; set; }
 
 		[JsonProperty("sprites")]
 		public Sprites Sprites { get; set; }
 
 		[JsonProperty("stats")]
-		public List<Stat> Stats { get; set; }
+		public List<PokemonStat> Stats { get; set; }
 
 		[JsonProperty("types")]
-		public List<Type> Types { get; set; }
+		public List<PokemonType> Types { get; set; }
 
 		[JsonProperty("weight")]
 		public int Weight { get; set; }
