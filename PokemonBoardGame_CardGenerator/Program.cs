@@ -13,8 +13,6 @@ var cardService = serviceProvider.GetService<PokemonCardService>();
 
 await cardService.GeneratePokemonCardsAsync();
 
-
-
 ServiceProvider RegisterServices(IConfiguration configuration)
 {
 	var serviceCollection = new ServiceCollection();
@@ -23,11 +21,14 @@ ServiceProvider RegisterServices(IConfiguration configuration)
 	
 	serviceCollection.Configure<PokemonSettings>(x => configuration.GetSection("PokemonSettings").Bind(x));
 
-	serviceCollection.AddHttpClient<IPokemonImageHttpService, CdnTractionHttpService>();
+	serviceCollection.AddHttpClient<IPokemonImageHttpService, PokemonAssetsService>();
 	serviceCollection.AddHttpClient<PokeApiHttpService>();
 
-	serviceCollection.AddTransient<PokemonDataService>();
 	serviceCollection.AddTransient<PokemonCardService>();
+	serviceCollection.AddTransient<PokemonEvolutionCardService>();
+	serviceCollection.AddTransient<PokemonMoveCardService>();
+
+	serviceCollection.AddSingleton<PokemonDataService>();
 
 	return serviceCollection.BuildServiceProvider();
 

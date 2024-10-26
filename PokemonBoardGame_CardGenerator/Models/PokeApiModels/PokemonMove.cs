@@ -1,30 +1,16 @@
 ﻿using Newtonsoft.Json;
 using PokemonBoardGame_CardGenerator.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 {
-	// Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
-	public class UseBefore
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
 
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Normal
+    public class Normal
 	{
 		[JsonProperty("use_after")]
 		public object UseAfter { get; set; }
 
 		[JsonProperty("use_before")]
-		public List<UseBefore> UseBefore { get; set; }
+		public List<PokemonLookup> UseBefore { get; set; }
 	}
 
 	public class Super
@@ -69,22 +55,13 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string Url { get; set; }
 	}
 
-	public class Language
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
 	public class EffectEntry
 	{
 		[JsonProperty("effect")]
 		public string Effect { get; set; }
 
 		[JsonProperty("language")]
-		public Language Language { get; set; }
+		public PokemonLookup Language { get; set; }
 
 		[JsonProperty("short_effect")]
 		public string ShortEffect { get; set; }
@@ -96,58 +73,22 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string FlavorText { get; set; }
 
 		[JsonProperty("language")]
-		public Language Language { get; set; }
+		public PokemonLookup Language { get; set; }
 
 		[JsonProperty("version_group")]
 		public VersionGroup VersionGroup { get; set; }
 	}
 
-	public class Generation
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class LearnedByPokemon
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Ailment
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Category
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
 	public class Meta
 	{
 		[JsonProperty("ailment")]
-		public Ailment Ailment { get; set; }
+		public PokemonLookup Ailment { get; set; }
 
 		[JsonProperty("ailment_chance")]
 		public int AilmentChance { get; set; }
 
 		[JsonProperty("category")]
-		public Category Category { get; set; }
+		public PokemonLookup Category { get; set; }
 
 		[JsonProperty("crit_rate")]
 		public int CritRate { get; set; }
@@ -177,26 +118,17 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public int StatChance { get; set; }
 	}
 
-	public class Name
+	public class PokemonMoveName
 	{
 		[JsonProperty("language")]
-		public Language Language { get; set; }
+		public PokemonLookup Language { get; set; }
 
 		[JsonProperty("name")]
-		public string Name2 { get; set; }
+		public string Name { get; set; }
 	}
 
 	public class SuperContestEffect
 	{
-		[JsonProperty("url")]
-		public string Url { get; set; }
-	}
-
-	public class Target
-	{
-		[JsonProperty("name")]
-		public string Name { get; set; }
-
 		[JsonProperty("url")]
 		public string Url { get; set; }
 	}
@@ -240,13 +172,13 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public List<FlavorTextEntry> FlavorTextEntries { get; set; }
 
 		[JsonProperty("generation")]
-		public Generation Generation { get; set; }
+		public PokemonLookup Generation { get; set; }
 
 		[JsonProperty("id")]
 		public int Id { get; set; }
 
 		[JsonProperty("learned_by_pokemon")]
-		public List<LearnedByPokemon> LearnedByPokemon { get; set; }
+		public List<PokemonLookup> LearnedByPokemon { get; set; }
 
 		[JsonProperty("machines")]
 		public List<object> Machines { get; set; }
@@ -258,7 +190,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string Name { get; set; }
 
 		[JsonProperty("names")]
-		public List<Name> Names { get; set; }
+		public List<PokemonMoveName> Names { get; set; }
 
 		[JsonProperty("past_values")]
 		public List<object> PastValues { get; set; }
@@ -279,7 +211,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public SuperContestEffect SuperContestEffect { get; set; }
 
 		[JsonProperty("target")]
-		public Target Target { get; set; }
+		public PokemonLookup Target { get; set; }
 
 		[JsonProperty("type")]
 		public TypeUrl Type { get; set; }

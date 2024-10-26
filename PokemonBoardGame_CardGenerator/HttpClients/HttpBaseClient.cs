@@ -2,14 +2,9 @@
 
 namespace PokemonBoardGame_CardGenerator.HttpClients
 {
-	public class HttpBaseClient
-	{
-		private readonly HttpClient httpClient;
-
-		public HttpBaseClient(HttpClient httpClient)
-		{
-			this.httpClient = httpClient;
-		}
+	public class HttpBaseClient(HttpClient httpClient)
+    {
+        protected Uri? GetBasePath() => httpClient?.BaseAddress;
 
 		protected async Task<HttpResponseMessage> GetAsync(string endpoint, Dictionary<string, string> parameters = null)
 		{

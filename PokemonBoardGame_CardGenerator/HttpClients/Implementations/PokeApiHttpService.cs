@@ -2,7 +2,7 @@
 
 namespace PokemonBoardGame_CardGenerator.HttpClients.Implementations
 {
-	public class PokeApiHttpService : HttpBaseClient
+    public class PokeApiHttpService : HttpBaseClient
 	{
 		private readonly string ApiVersion;
 
@@ -31,5 +31,10 @@ namespace PokemonBoardGame_CardGenerator.HttpClients.Implementations
 		{
 			return await GetAsync<PokemonEvolutionChain>(ApiVersion + "evolution-chain/" + chainNo);
 		}
-	}
+
+        public async Task<PokemonItem> GetPokemonItemAsync(int id)
+        {
+            return await GetAsync<PokemonItem>(ApiVersion + "item/" + id);
+        }
+    }
 }

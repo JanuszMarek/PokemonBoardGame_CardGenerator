@@ -11,16 +11,25 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public string Url { get; set; }
 	}
 
-	public class EvolutionDetail
+    public class Location
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("url")]
+        public string Url { get; set; }
+    }
+
+    public class EvolutionDetail
 	{
 		[JsonProperty("gender", NullValueHandling = NullValueHandling.Ignore)]
 		public object Gender { get; set; }
 
 		[JsonProperty("held_item", NullValueHandling = NullValueHandling.Ignore)]
-		public object HeldItem { get; set; }
+		public EvolutionDetailsItem? HeldItem { get; set; }
 
 		[JsonProperty("item", NullValueHandling = NullValueHandling.Ignore)]
-		public object Item { get; set; }
+		public EvolutionDetailsItem? Item { get; set; }
 
 		[JsonProperty("known_move", NullValueHandling = NullValueHandling.Ignore)]
 		public object KnownMove { get; set; }
@@ -29,7 +38,7 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		public object KnownMoveType { get; set; }
 
 		[JsonProperty("location", NullValueHandling = NullValueHandling.Ignore)]
-		public object Location { get; set; }
+		public Location Location { get; set; }
 
 		[JsonProperty("min_affection", NullValueHandling = NullValueHandling.Ignore)]
 		public int? MinAffection { get; set; }
@@ -67,6 +76,14 @@ namespace PokemonBoardGame_CardGenerator.Models.PokeApiModels
 		[JsonProperty("turn_upside_down", NullValueHandling = NullValueHandling.Ignore)]
 		public bool TurnUpsideDown { get; set; }
 	}
+
+    public class EvolutionDetailsItem
+    {
+        [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
+        public string Name { get; set; }
+        [JsonProperty("url", NullValueHandling = NullValueHandling.Ignore)]
+        public string Url { get; set; }
+    }
 
 	//public class EvolvesTo
 	//{

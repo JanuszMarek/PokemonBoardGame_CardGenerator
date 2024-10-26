@@ -1,117 +1,45 @@
 ﻿using Newtonsoft.Json;
 
-public class Color
-{
-	[JsonProperty("name")]
-	public string Name { get; set; }
-
-	[JsonProperty("url")]
-	public string Url { get; set; }
-}
-
-public class EggGroup
-{
-	[JsonProperty("name")]
-	public string Name { get; set; }
-
-	[JsonProperty("url")]
-	public string Url { get; set; }
-}
-
 public class EvolutionChainUrl
 {
 	[JsonProperty("url")]
 	public string Url { get; set; }
 }
 
-//public class Language
-//{
-//	[JsonProperty("name")]
-//	public string Name { get; set; }
-
-//	[JsonProperty("url")]
-//	public string Url { get; set; }
-//}
-
-//public class Version
-//{
-//	[JsonProperty("name")]
-//	public string Name { get; set; }
-
-//	[JsonProperty("url")]
-//	public string Url { get; set; }
-//}
-
-//public class FlavorTextEntry
-//{
-//	[JsonProperty("flavor_text")]
-//	public string FlavorText { get; set; }
-
-//	[JsonProperty("language")]
-//	public Language Language { get; set; }
-
-//	[JsonProperty("version")]
-//	public Version Version { get; set; }
-//}
-
-//public class Genera
-//{
-//	[JsonProperty("genus")]
-//	public string Genus { get; set; }
-
-//	[JsonProperty("language")]
-//	public Language Language { get; set; }
-//}
-
-//public class Generation
-//{
-//	[JsonProperty("name")]
-//	public string Name { get; set; }
-
-//	[JsonProperty("url")]
-//	public string Url { get; set; }
-//}
-
-public class GrowthRate
+public class FlavorTextEntry
 {
-	[JsonProperty("name")]
-	public string Name { get; set; }
+    [JsonProperty("flavor_text")]
+    public string FlavorText { get; set; }
 
-	[JsonProperty("url")]
-	public string Url { get; set; }
+    [JsonProperty("language")]
+    public PokemonLookup Language { get; set; }
+
+    [JsonProperty("version")]
+    public PokemonLookup Version { get; set; }
 }
 
-public class Habitat
+public class Genera
 {
-	[JsonProperty("name")]
-	public string Name { get; set; }
+    [JsonProperty("genus")]
+    public string Genus { get; set; }
 
-	[JsonProperty("url")]
-	public string Url { get; set; }
+    [JsonProperty("language")]
+    public PokemonLookup Language { get; set; }
 }
 
-//public class Name
-//{
-//	[JsonProperty("language")]
-//	public Language Language { get; set; }
-
-//	[JsonProperty("name")]
-//	public string Name { get; set; }
-//}
-
-public class Area
+public class PokemonName
 {
-	[JsonProperty("name")]
-	public string Name { get; set; }
+    [JsonProperty("language")]
+    public PokemonLookup Language { get; set; }
 
-	[JsonProperty("url")]
-	public string Url { get; set; }
+    [JsonProperty("name")]
+    public string Name { get; set; }
 }
 
 public class PalParkEncounter
 {
 	[JsonProperty("area")]
-	public Area Area { get; set; }
+	public PokemonLookup Area { get; set; }
 
 	[JsonProperty("base_score")]
 	public int BaseScore { get; set; }
@@ -120,34 +48,16 @@ public class PalParkEncounter
 	public int Rate { get; set; }
 }
 
-public class Pokedex
-{
-	[JsonProperty("name")]
-	public string Name { get; set; }
-
-	[JsonProperty("url")]
-	public string Url { get; set; }
-}
-
 public class PokedexNumber
 {
 	[JsonProperty("entry_number")]
 	public int EntryNumber { get; set; }
 
 	[JsonProperty("pokedex")]
-	public Pokedex Pokedex { get; set; }
+	public PokemonLookup Pokedex { get; set; }
 }
 
-public class Shape
-{
-	[JsonProperty("name")]
-	public string Name { get; set; }
-
-	[JsonProperty("url")]
-	public string Url { get; set; }
-}
-
-public class PokemonUrl
+public class PokemonLookup
 {
 	[JsonProperty("name")]
 	public string Name { get; set; }
@@ -162,7 +72,7 @@ public class Variety
 	public bool IsDefault { get; set; }
 
 	[JsonProperty("pokemon")]
-	public PokemonUrl Pokemon { get; set; }
+	public PokemonLookup Pokemon { get; set; }
 }
 
 public class PokemonSpecies
@@ -174,21 +84,21 @@ public class PokemonSpecies
 	public int CaptureRate { get; set; }
 
 	[JsonProperty("color")]
-	public Color Color { get; set; }
+	public PokemonLookup Color { get; set; }
 
 	[JsonProperty("egg_groups")]
-	public List<EggGroup> EggGroups { get; set; }
+	public List<PokemonLookup> EggGroups { get; set; }
 
 	[JsonProperty("evolution_chain")]
 	public EvolutionChainUrl EvolutionChain { get; set; }
 
-	//[JsonProperty("evolves_from_species")]
-	//public object EvolvesFromSpecies { get; set; }
+    [JsonProperty("evolves_from_species")]
+    public PokemonLookup EvolvesFromSpecies { get; set; }
 
-	//[JsonProperty("flavor_text_entries")]
-	//public List<FlavorTextEntry> FlavorTextEntries { get; set; }
+    [JsonProperty("flavor_text_entries")]
+    public List<FlavorTextEntry> FlavorTextEntries { get; set; }
 
-	[JsonProperty("form_descriptions")]
+    [JsonProperty("form_descriptions")]
 	public List<object> FormDescriptions { get; set; }
 
 	[JsonProperty("forms_switchable")]
@@ -197,17 +107,17 @@ public class PokemonSpecies
 	[JsonProperty("gender_rate")]
 	public int GenderRate { get; set; }
 
-	//[JsonProperty("genera")]
-	//public List<Genera> Genera { get; set; }
+    [JsonProperty("genera")]
+    public List<Genera> Genera { get; set; }
 
-	//[JsonProperty("generation")]
-	//public Generation Generation { get; set; }
+    [JsonProperty("generation")]
+    public PokemonLookup? Generation { get; set; }
 
-	[JsonProperty("growth_rate")]
-	public GrowthRate GrowthRate { get; set; }
+    [JsonProperty("growth_rate")]
+	public PokemonLookup GrowthRate { get; set; }
 
 	[JsonProperty("habitat")]
-	public Habitat Habitat { get; set; }
+	public PokemonLookup Habitat { get; set; }
 
 	[JsonProperty("has_gender_differences")]
 	public bool HasGenderDifferences { get; set; }
@@ -230,10 +140,10 @@ public class PokemonSpecies
 	[JsonProperty("name")]
 	public string Name { get; set; }
 
-	//[JsonProperty("names")]
-	//public List<Name> Names { get; set; }
+    [JsonProperty("names")]
+    public List<PokemonName> Names { get; set; }
 
-	[JsonProperty("order")]
+    [JsonProperty("order")]
 	public int Order { get; set; }
 
 	[JsonProperty("pal_park_encounters")]
@@ -243,7 +153,7 @@ public class PokemonSpecies
 	public List<PokedexNumber> PokedexNumbers { get; set; }
 
 	[JsonProperty("shape")]
-	public Shape Shape { get; set; }
+	public PokemonLookup Shape { get; set; }
 
 	[JsonProperty("varieties")]
 	public List<Variety> Varieties { get; set; }
